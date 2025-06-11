@@ -39,7 +39,7 @@ export const chatRouter = createTRPCRouter({
             const id = generateId(); // generate a unique chat ID
             await database.createChat({
                 id: id,
-                userId: ctx.session.user.id,
+                userId: ctx.user.id,
                 messages: []
             })
             return id;
@@ -50,7 +50,7 @@ export const chatRouter = createTRPCRouter({
         }))
         .output(z.array(messageSchema))
         .query(async ({ ctx, input }) => {
-            const chat = await database.getChat(ctx.session.user.id, input.id);
+            const chat = await database.getChat(ctx.user.id, input.id);
             return chat.messages;
         }),
     save: protectedProcedure
@@ -61,7 +61,7 @@ export const chatRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             await database.updateChat({
                 id: input.id,
-                userId: ctx.session.user.id,
+                userId: ctx.user.id,
                 messages: input.messages
             })
         }),
@@ -69,7 +69,7 @@ export const chatRouter = createTRPCRouter({
         .input(z.void())
         .output(z.array(z.string()))
         .query(async ({ ctx, input }) => {
-            const chats = await database.getChats(ctx.session.user.id);
+            const chats = await database.getChats(ctx.user.id);
             return chats;
         })
 })

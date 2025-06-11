@@ -1,7 +1,12 @@
 "use server"
 
-import { signOut } from "~/server/auth"
-
-export async function doSignout() {
-    await signOut()
+import { auth } from "~/lib/auth"
+ 
+export const signIn = async (email: string, password: string) => {
+    await auth.api.signInEmail({
+        body: {
+            email: email,
+            password: password,
+        }
+    })
 }

@@ -3,8 +3,8 @@
 import { Button } from "./button";
 import { PinkBubble } from "./pink-bubble";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { doSignout } from "~/server/actions";
+import { useSession } from "~/lib/auth-client";
+
 
 export default function ChatSidebar({ chats }: { chats: string[] }) {
     const session = useSession()
@@ -21,7 +21,7 @@ export default function ChatSidebar({ chats }: { chats: string[] }) {
             </div>
             <div className="h-1/10 flex flex-row gap-2 justify-between items-center">
                 <div className="text-sm">{session.data?.user?.name}</div>
-                <Button onClick={doSignout}>Logout</Button>
+                <Button>Logout</Button>
             </div>
         </PinkBubble>
     )
