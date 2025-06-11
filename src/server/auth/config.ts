@@ -1,6 +1,8 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import Credentials from "next-auth/providers/credentials"
+
 
 import { db } from "~/server/db";
 import {
@@ -39,6 +41,26 @@ declare module "next-auth" {
 export const authConfig = {
   providers: [
     DiscordProvider,
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        console.log("Authorizing credentials", credentials);
+        const { email, password } = credentials as { email?: string, password?: string };
+        if (email?.includes("@test.com") && password === "test") {
+          const id = email.split("@")[0];
+          console.log("Authorizing test user ", id);
+          return {
+            id,
+            name: `Test User ${id}`,
+            email
+          };
+        }
+        return null
+      },
+    }),
     /**
      * ...add more providers here.
      *
