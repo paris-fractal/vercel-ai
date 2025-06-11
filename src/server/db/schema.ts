@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { index, pgTable, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
+import type { ChatSchema, MessageSchema } from "../api/routers/chat";
 
 export const users = pgTable("user", (d) => ({
   id: d
@@ -77,3 +78,9 @@ export const verificationTokens = pgTable(
   }),
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
+
+export const chats = pgTable("chat", (d) => ({
+  id: d.varchar({ length: 255 }).notNull().primaryKey(),
+  userId: d.varchar({ length: 255 }).notNull(),
+  data: d.jsonb().$type<MessageSchema[]>().notNull(),
+}));

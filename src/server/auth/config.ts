@@ -2,9 +2,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import Credentials from "next-auth/providers/credentials"
-
-
-import { db } from "~/server/db";
+import { database, db } from "~/server/db";
 import {
   accounts,
   sessions,
@@ -39,6 +37,7 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  debug: true,
   providers: [
     DiscordProvider,
     Credentials({
@@ -47,15 +46,21 @@ export const authConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("Authorizing credentials", credentials);
         const { email, password } = credentials as { email?: string, password?: string };
         if (email?.includes("@test.com") && password === "test") {
-          const id = email.split("@")[0];
-          console.log("Authorizing test user ", id);
+          const id = email.split("@")[0]!;
+          const user = await database.getUser(id);
+          if (!user) {
+            await database.createUser({
+              id,
+              name: `Test User ${id}`,
+              email
+            });
+          }
           return {
             id,
-            name: `Test User ${id}`,
-            email
+            name: user?.name,
+            email: user?.email
           };
         }
         return null
@@ -77,13 +82,30 @@ export const authConfig = {
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
+        id: token.sub,
       },
     }),
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+    authorized: ({ auth, request }) => {
+      if (request.nextUrl.pathname.includes("signin")) {
+        return true
+      }
+      console.log("auth data: ", auth)
+      return !!auth
+    },
   },
 } satisfies NextAuthConfig;
